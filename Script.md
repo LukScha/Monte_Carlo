@@ -1,6 +1,11 @@
 ---
-title: '\begin{center} Monte Carlo-Simulation Study: CPPI-Strategy \\ Case study teaching: Cheat sheet style \\ (Gruppe 24)" \end{center}'
-author: "David Pitz (11840550), Paul Gassner (11814819), Maximilian Lang (11844866), Marlene Bala (11817168), Lukas Schafferhofer (11771039)"
+title: '\begin{center} Monte Carlo-Simulation Study: CPPI-Strategy \\ Case study teaching: Cheat sheet style \\ (Gruppe 24) \end{center}'
+author: 
+- David Pitz (11840550) 
+- Paul Gassner (11814819) 
+- Maximilian Lang (11844866) 
+- Marlene Bala (11817168)  
+- Lukas Schafferhofer (11771039) 
 date: "12 11 2020"
 output: 
   pdf_document:
@@ -29,10 +34,20 @@ knitr::opts_chunk$set(echo = TRUE)
 # m = multiplier
 #b <- 0.3
 # b = maximale Risikoanteil
-Voestalpine.v<-c(27.769463,26.715246,29.577293,28.870247,31.685719,32.066765,31.609516,33.091343,29.139774,26.704212,28.648314,26.791195,24.655727,21.085018,23.224834,25.577765,27.382690,26.778147,26.112719,27.417482,26.702175,27.719145,29.006104,32.178509,33.559963,35.278912,35.751396,33.208977,34.518433,36.273380,36.718868,38.572811,40.275539,39.864376,43.643383,45.098625,46.054928,48.304775,43.980625,39.333096,40.386414,42.465328,36.450333,39.610283,36.968590,37.695717,30.032194,28.080437,24.971020,26.674023,26.042572,25.899059,27.391581,22.359108,25.994736,23.000128,20.950001,21.080000,22.450001,23.719999)
+Voestalpine.v<-c(27.769463,26.715246,29.577293,28.870247,31.685719,32.066765,31.609516,
+                 33.091343,29.139774,26.704212,28.648314,26.791195,24.655727,21.085018,
+                 23.224834,25.577765,27.382690,26.778147,26.112719,27.417482,26.702175,
+                 27.719145,29.006104,32.178509,33.559963,35.278912,35.751396,33.208977,
+                 34.518433,36.273380,36.718868,38.572811,40.275539,39.864376,43.643383,
+                 45.098625,46.054928,48.304775,43.980625,39.333096,40.386414,42.465328,
+                 36.450333,39.610283,36.968590,37.695717,30.032194,28.080437,24.971020,
+                 26.674023,26.042572,25.899059,27.391581,22.359108,25.994736,23.000128,
+                 20.950001,21.080000,22.450001,23.719999)
 length(Voestalpine.v)
 
-Voestalpine_last_twelve.v <- c(28.080437,24.971020,26.674023,26.042572,25.899059,27.391581,22.359108,25.994736,23.000128,20.950001,21.080000,22.450001,23.719999)
+Voestalpine_last_twelve.v <- c(28.080437,24.971020,26.674023,26.042572,25.899059,
+                               27.391581,22.359108,25.994736,23.000128,20.950001,
+                               21.080000,22.450001,23.719999)
 length(Voestalpine_last_twelve.v)
 
 
@@ -49,14 +64,19 @@ m <- 0
 # m = multiplier
 b <- 0.3
 # b = maximale Risikoanteil
-PROBE.v <- c(1000, 968.51, 982.92, 940.53, 1035.58, 1059.87, 1015.06, 1048.39, 1098.61, 1140.49, 1125.24, 1232.99, 1266.32)
+PROBE.v <- c(1000, 968.51, 982.92, 940.53, 1035.58, 1059.87, 1015.06, 1048.39, 
+             1098.61, 1140.49, 1125.24, 1232.99, 1266.32)
 ```
 
 ```{r}
 set.seed(1) # Ensuring path consistency in simulation studies
 (CPPI.m<-matrix(0,13,11, byrow=TRUE))
-colnames(CPPI.m) <- c("t", "T_t,T", "F_t", "C_t", "X_r,t", "X_f,t", "S_t", "TSR_t", "W_t", "delta%W_t", "delta%W_t/TSR_t")
+colnames(CPPI.m) <- c("t", "T_t,T", "F_t", "C_t", "X_r,t", "X_f,t", "S_t",
+                      "TSR_t", "W_t", "delta%W_t", "delta%W_t/TSR_t")
+
+
 ```
+
 
 ```{r}
 func_F_t <- function(arg_F_T, arg_r_f, arg_T_t) {
@@ -144,7 +164,7 @@ sig <- 0
 #Erstellung des Renditevektors
 Renditenvektor.v <- c()
 for (i in 1:length(Voestalpine.v)-1){
- Renditenvektor.v[i] <- (Voestalpine.v[i+1]-Voestalpine.v[i])/Voestalpine.v[i]
+ Renditenvektor.v[i] <- func_TSR_t(Voestalpine.v[i+1],Voestalpine.v[i])
 }
 
 Renditenvektor.v
@@ -200,7 +220,7 @@ shapiro.test(S.m[,13])
 
 
 constant_proportion <- function(W,r){
-  return(W*exp(r)+W*exp(0.01/subp))
+  return(0.5*W*exp(r)+0.5*W*exp(0.01/subp))
 }
 
 #wealth simulation
@@ -218,7 +238,6 @@ plot(ecdf(W.m[,13])) # Plotting the emp. cum. density function
 plot(qqnorm(W.m[,13])) # Plotting theoretical/sample quantiles
 qqline(W.m[,13])
 shapiro.test(W.m[,13])
-
 
 
 ```
