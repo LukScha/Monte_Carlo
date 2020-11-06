@@ -24,15 +24,15 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-#W_0 <- 1000000
-#F_T <- 0.65*W_0
-#R_f <- 0.01
-#r_f <- log(1+R_f)
-#T_T <- 1
-#months <- 12
-#m <- 1/0.2
+W_0 <- 1000000
+F_T <- 0.65*W_0
+R_f <- 0.01
+r_f <- log(1+R_f)
+T_T <- 1
+months <- 12
+m = 1
 # m = multiplier
-#b <- 0.3
+b = 0.1
 # b = maximale Risikoanteil
 Voestalpine.v<-c(27.769463,26.715246,29.577293,28.870247,31.685719,32.066765,31.609516,
                  33.091343,29.139774,26.704212,28.648314,26.791195,24.655727,21.085018,
@@ -54,19 +54,20 @@ length(Voestalpine_last_twelve.v)
 
 
 #Unterprüfung
-W_0 <- 1000
-F_T <- W_0
-R_f <- 0.05
-r_f <- log(1+R_f)
-T_T <- 1
-months <- 12
-m <- 0
+#W_0 <- 1000
+#F_T <- W_0
+#R_f <- 0.05
+#r_f <- log(1+R_f)
+#T_T <- 1
+#months <- 12
+#m <- 15
 # m = multiplier
-b <- 0.3
+#b <- 0.3
 # b = maximale Risikoanteil
-PROBE.v <- c(1000, 968.51, 982.92, 940.53, 1035.58, 1059.87, 1015.06, 1048.39, 
-             1098.61, 1140.49, 1125.24, 1232.99, 1266.32)
+#PROBE.v <- c(1000, 968.51, 982.92, 940.53, 1035.58, 1059.87, 1015.06, 1048.39, 
+             #1098.61, 1140.49, 1125.24, 1232.99, 1266.32)
 ```
+
 
 ```{r}
 set.seed(1) # Ensuring path consistency in simulation studies
@@ -87,7 +88,7 @@ func_C_t <- function(arg_W_t, arg_F_t) {
 }
 
 func_X_rt <- function(arg_m, arg_C_t, arg_b, arg_W_t) {
-	if (arg_m*arg_C_t > arg_b*arg_W_t) return (arg_b*arg_W_t) else return (arg_m*arg_C_t)
+  if (arg_m*arg_C_t > arg_b*arg_W_t) return (arg_b*arg_W_t) else return (arg_m*arg_C_t)
 }
 
 func_X_ft <- function(arg_W_t, arg_X_rt) {
@@ -113,8 +114,7 @@ for (j in 0:12) {
   #F,t
   CPPI.m[j+1,3] <- func_F_t(F_T, r_f, CPPI.m[j+1,2])
   #S,t
-  #CPPI.m[j+1,7] <- Voestalpine_last_twelve.v[j+1]
-  CPPI.m[j+1,7] <- PROBE.v[j+1]
+  CPPI.m[j+1,7] <- Voestalpine_last_twelve.v[j+1]
 }
 
 CPPI.m[1,4] <- max(W_0-CPPI.m[1,3], 0)
@@ -179,7 +179,6 @@ cat("Erwartungswert der Rendite: ", mu, "\n")
 
 cat("Standardabweichung der Rendite: ", sig, "\n")
 ```
-
 ```{r}
 #begin Monte_Carlo
 
@@ -188,58 +187,114 @@ sim = 1000
 #dimensions
 subp = 12
 
-set.seed(1) # Ensuring path consistency in simulation studies
-MonteCarlo.m<-matrix(rnorm(sim*subp),sim,subp, byrow=TRUE)
+set.seed(1) # So wird jedesmal versichert dass immer die gleichen Zahlen gewählt werden
+zufällige_Rendite.m<-matrix(rnorm(sim*subp),sim,subp, byrow=TRUE)
 
 
-
-
-#Matrix of returns
-
-r.m <- (mu-(sig^2))/2+sig*MonteCarlo.m
-
-
-#matrix of price development
-
-S.m <- matrix(0,sim,subp+1)
-S.m[,1] <- 1000
-for(j in 2:13) {
-  S.m[,j] <-S.m[,j-1]*exp(r.m[,j-1])
+#Normalverteilte Renditen
+r.m <- (mu-(sig^2))/2+sig*zufällige_Rendite.m
+#Restlaufzeit
+T_t_T.v <- c()
+#Floor
+F_t.v <- c()
+  
+for (j in 0:13) {
+  #T,t,T #Restlaufzeit
+  T_t_T.v[j] <- 1-((j-1)/months)
+  
+  #F,t
+  F_t.v[j] <- func_F_t(F_T, r_f, T_t_T.v[j])
 }
+print(T_t_T.v)
+print(F_t.v)
+
+#Risikoparamter m und b deklarieren
+multi.v <- c(1,3,5)
+b_risk.v <- c(0.1, 0.2,0.25,0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.8)
+Results <- matrix(0,length(multi.v),length(b_risk.v))
+colnames(Results) <- c("0.1", "0.2","0.25", "0.3","0.35", "0.4", "0.45", "0.5", "0.55", "0.6", "0.8")
+Standardabweichung <- matrix(0,length(multi.v),length(b_risk.v))
+colnames(Standardabweichung) <- c("0.1", "0.2","0.25", "0.3","0.35", "0.4", "0.45", "0.5", "0.55", "0.6", "0.8")
 
 
-head(S.m)
+#Iteration über alle Werte m
+for(j in 1:length(multi.v)){
+  
+  #Iteration über alle Werte b
+  for(i in 1:length(b_risk.v)){
+    
+    #notwendige Variablen
+    C_t_sim <- matrix(0,sim, subp+1)
+    X_r_t_sim <- matrix(0,sim,subp+1)
+    X_f_t_sim <- matrix(0,sim,subp+1)
+    W_t_sim <- matrix(0,sim,subp+1)
+    #Summe aller Portfoliowerte am Zeitpunkt t=12
+    sum_of_results <- 0
+  
+    #Iteration durch alle Simulationsläufe
+    for(k in 1:sim){
+      #Startwert W_0_sim
+      W_t_sim[k,1] <- W_0
+      C_t_sim[k,1] <- func_C_t(W_t_sim[k,1], F_t.v[1])
+      X_r_t_sim[k,1] <- func_X_rt(multi.v[j], C_t_sim[k,1], b_risk.v[i],  W_t_sim[k,1])
+      X_f_t_sim[k,1] <- func_X_ft(W_t_sim[k,1], X_r_t_sim[k,1])
+      
+      #Iteration durch alle Zeitpunkte
+      for(l in 1:subp){
+        
+        W_t_sim[k,l+1] <- func_W_t(X_r_t_sim[k,l], r.m[k,l], X_f_t_sim[k,l], r_f)
+        C_t_sim[k,l+1] <- func_C_t(W_t_sim[k,l+1], F_t.v[l+1])
+        X_r_t_sim[k,l+1] <- func_X_rt(multi.v[j], C_t_sim[k,l+1], b_risk.v[i],  W_t_sim[k,l+1])
+        X_f_t_sim[k,l+1] <- func_X_ft(W_t_sim[k,l+1], X_r_t_sim[k,l+1])
+      }
+      sum_of_results <- sum_of_results + W_t_sim[k,subp+1]
+    }
+    
+    Mittwelwert_Gesamtwert <- sum_of_results/sim
+    Results[j,i] <- sum_of_results/sim
+    
+    
+      for (x in 1:1000){
+        Varianz_Gesamtwert <- ((1/(1000-1)))*(W_t_sim[x,subp+1]-Mittwelwert_Gesamtwert)^2
+      }
+      sig_Gesamtwert <- Varianz_Gesamtwert^(1/2)
 
-plot(S.m[,13])
-hist(S.m[,13])
-plot(ecdf(S.m[,13]))
-plot(qqnorm(S.m[,13]))
-qqline(S.m[,13])
+      Standardabweichung[j,i] <- sig_Gesamtwert
 
-shapiro.test(S.m[,13])
-
-
-constant_proportion <- function(W,r){
-  return(0.5*W*exp(r)+0.5*W*exp(0.01/subp))
-}
-
-#wealth simulation
-W.m <- matrix(0, sim, subp+1)
-W.m[,1] <- 1000
-
-for(j in 2:(subp+1)) {
-  W.m[,j]=constant_proportion(W.m[,j-1],r.m[,j-1])
+    
+    hist(W_t_sim[,13], 
+     main = paste("m: " , multi.v[j], "b: ", b_risk.v[i]),
+     xlab="Gesamtwert des Portfolios", 
+     border="Black", 
+     col="orange", 
+     breaks=30, 
+     )
+    
   }
-head(W.m)
+}
 
-plot(W.m[,13]) # Plotting the final wealth realizations
-hist(W.m[,13]) # Plotting the final wealth histogram
-plot(ecdf(W.m[,13])) # Plotting the emp. cum. density function
-plot(qqnorm(W.m[,13])) # Plotting theoretical/sample quantiles
-qqline(W.m[,13])
-shapiro.test(W.m[,13])
+print(Results)
+print(Standardabweichung)
+
+
+
+
+
+
+
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
 
 
