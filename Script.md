@@ -6,7 +6,7 @@ author:
 - Maximilian Lang (11844866) 
 - Marlene Bala (11817168)  
 - Lukas Schafferhofer (11771039) 
-date: "12 11 2020"
+date: "12.11.2020"
 output: 
   pdf_document:
     toc: yes
@@ -43,14 +43,11 @@ Voestalpine.v<-c(27.769463,26.715246,29.577293,28.870247,31.685719,32.066765,31.
                  36.450333,39.610283,36.968590,37.695717,30.032194,28.080437,24.971020,
                  26.674023,26.042572,25.899059,27.391581,22.359108,25.994736,23.000128,
                  20.950001,21.080000,22.450001,23.719999)
-length(Voestalpine.v)
+
 
 Voestalpine_last_twelve.v <- c(28.080437,24.971020,26.674023,26.042572,25.899059,
                                27.391581,22.359108,25.994736,23.000128,20.950001,
                                21.080000,22.450001,23.719999)
-length(Voestalpine_last_twelve.v)
-
-
 
 
 #Unterprüfung
@@ -71,11 +68,9 @@ length(Voestalpine_last_twelve.v)
 
 ```{r}
 set.seed(1) # Ensuring path consistency in simulation studies
-(CPPI.m<-matrix(0,13,11, byrow=TRUE))
+CPPI.m<-matrix(0,13,11, byrow=TRUE)
 colnames(CPPI.m) <- c("t", "T_t,T", "F_t", "C_t", "X_r,t", "X_f,t", "S_t",
                       "TSR_t", "W_t", "delta%W_t", "delta%W_t/TSR_t")
-
-
 ```
 
 
@@ -121,8 +116,6 @@ CPPI.m[1,4] <- max(W_0-CPPI.m[1,3], 0)
 CPPI.m[1,5] <- min(m*CPPI.m[1,4], b*W_0)
 CPPI.m[1,6] <- W_0-CPPI.m[1,5]
 
-
-
 for (j in 1:12){
   # TSR
   CPPI.m[j+1,8] <- func_TSR_t(CPPI.m[j+1,7],CPPI.m[j,7])
@@ -138,9 +131,7 @@ for (j in 1:12){
   CPPI.m[j+1,10] <- func_delta_Wt(CPPI.m[j+1,9], CPPI.m[j,9])
   #delta%W_t/TSR_t
   CPPI.m[j,11] <- (CPPI.m[j,10]/CPPI.m[j,8])
-  
 }
-
 
 #delta%W_0
 CPPI.m[1,10] <- 0
@@ -150,11 +141,6 @@ CPPI.m[2,10] <- (CPPI.m[2,9]-W_0)/W_0
 CPPI.m[2,11] <- (CPPI.m[2,10]/CPPI.m[2,8])
 #delta%W_t/TSR_12
 CPPI.m[13,11] <- (CPPI.m[13,10]/CPPI.m[13,8])
-CPPI.m
-
-
-
-
 
 
 #monatlichen Momente des RENDITEVEKTORS
@@ -205,16 +191,16 @@ for (j in 0:13) {
   #F,t
   F_t.v[j] <- func_F_t(F_T, r_f, T_t_T.v[j])
 }
-print(T_t_T.v)
-print(F_t.v)
 
 #Risikoparamter m und b deklarieren
 multi.v <- c(1,3,5)
-b_risk.v <- c(0.1, 0.2,0.25,0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.8)
-Results <- matrix(0,length(multi.v),length(b_risk.v))
-colnames(Results) <- c("0.1", "0.2","0.25", "0.3","0.35", "0.4", "0.45", "0.5", "0.55", "0.6", "0.8")
+b_risk.v <- c(0.05, 0.1, 0.2, 0.25, 0.5)
+Erwartungswert_Portfolio <- matrix(0,length(multi.v),length(b_risk.v))
+colnames(Erwartungswert_Portfolio) <- c("0.05", "0.1", "0.2", "0.25", "0.5")
+rownames(Erwartungswert_Portfolio) <- c("m=1 ","m=3 ","m=5 ")
 Standardabweichung <- matrix(0,length(multi.v),length(b_risk.v))
-colnames(Standardabweichung) <- c("0.1", "0.2","0.25", "0.3","0.35", "0.4", "0.45", "0.5", "0.55", "0.6", "0.8")
+colnames(Standardabweichung) <- c("0.05", "0.1", "0.2", "0.25", "0.5")
+rownames(Standardabweichung) <- c("m=1 ","m=3 ","m=5 ")
 
 
 #Iteration über alle Werte m
@@ -244,50 +230,43 @@ for(j in 1:length(multi.v)){
         
         W_t_sim[k,l+1] <- func_W_t(X_r_t_sim[k,l], r.m[k,l], X_f_t_sim[k,l], r_f)
         C_t_sim[k,l+1] <- func_C_t(W_t_sim[k,l+1], F_t.v[l+1])
-        X_r_t_sim[k,l+1] <- func_X_rt(multi.v[j], C_t_sim[k,l+1], b_risk.v[i],  W_t_sim[k,l+1])
+        X_r_t_sim[k,l+1] <- func_X_rt(multi.v[j], C_t_sim[k,l+1], b_risk.v[i],  
+                                      W_t_sim[k,l+1])
         X_f_t_sim[k,l+1] <- func_X_ft(W_t_sim[k,l+1], X_r_t_sim[k,l+1])
       }
       sum_of_results <- sum_of_results + W_t_sim[k,subp+1]
     }
     
     Mittwelwert_Gesamtwert <- sum_of_results/sim
-    Results[j,i] <- sum_of_results/sim
     
+   
+    Erwartungswert_Portfolio[j,i] <- sum_of_results/sim
     
-      for (x in 1:1000){
-        Varianz_Gesamtwert <- ((1/(1000-1)))*(W_t_sim[x,subp+1]-Mittwelwert_Gesamtwert)^2
-      }
-      sig_Gesamtwert <- Varianz_Gesamtwert^(1/2)
+    Varianz_Gesamtwert <- 0
+    for (x in 1:1000){
+      Varianz_Gesamtwert <-Varianz_Gesamtwert + 
+        ((W_t_sim[x,subp+1]-Mittwelwert_Gesamtwert)^2)
+    }
+    Varianz_Gesamtwert <- Varianz_Gesamtwert/1000
+    sig_Gesamtwert <- Varianz_Gesamtwert^(1/2)
 
-      Standardabweichung[j,i] <- sig_Gesamtwert
+    Standardabweichung[j,i] <- sig_Gesamtwert
 
-    
-    hist(W_t_sim[,13], 
+    #Teilen durch Million um Lesbarkeit zu verbessern
+    hist((W_t_sim[,13]/1000000), 
      main = paste("m: " , multi.v[j], "b: ", b_risk.v[i]),
-     xlab="Gesamtwert des Portfolios", 
+     xlab="Gesamtwert des Portfolios / 1e+06", 
      border="Black", 
      col="orange", 
-     breaks=30, 
+     breaks=30
      )
     
   }
 }
 
-print(Results)
+print(Erwartungswert_Portfolio)
 print(Standardabweichung)
-
-
-
-
-
-
-
-
-
 ```
-
-
-
 
 
 
